@@ -16,6 +16,8 @@ describe('Highest priority tests', () => {
     // because I make a habit of ensuring that all my automated tests clean up any data they create
 
     it('Schedule and Cancel Payment', () => {
+        // setup intercept
+        cy.intercept('https://devapi.peach.finance/api/people/BO-2K6E-4PLK/loans/LN-QBW4-55VK/transactions?isVirtual=false').as('activityLoading')
         // setup dates
         const $today = new Date();
         let $months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -23,6 +25,20 @@ describe('Highest priority tests', () => {
         let $thisMonth = $months[$today.getMonth()];
         let $nextMonth = $months[$today.getMonth() + 1];
         let $scheduledDate = $monthsAbbr[$today.getMonth() + 1] + ' 4';
+
+        // wait for activity feed to appear
+        cy.wait('@activityLoading');
+        // check to see how many payments of $3.33 are scheduled for the 4th of next month
+        cy.get('section[class*="InfoCardContainer"]').within(($container) => {
+            if ($container.find(`div:contains(${$scheduledDate})`).length > 0) {
+                cy.contains($scheduledDate).closest('[data-cy="loan-timeline-card"]').within(($date) => {
+                    cy.wrap($date.find('span:contains(- $3.33)').length).as('existingPayments');
+                });
+            }
+            else {
+                cy.wrap(0).as('existingPayments');
+            }
+        });
 
         // schedule payment for the 4th of next month
         cy.contains('Make a payment').click();
@@ -52,8 +68,13 @@ describe('Highest priority tests', () => {
         cy.get('[data-cy="submit"]').click();
 
         // validate payment appears on homepage
-        cy.get('section[class*="InfoCardContainer"]').within(() => {
-            cy.contains($scheduledDate).closest('[data-cy="loan-timeline-card"]').within(() => {
+        cy.wait('@activityLoading');
+        cy.get('section[class*="InfoCardContainer"]').within(($container) => {
+            cy.contains($scheduledDate).closest('[data-cy="loan-timeline-card"]').within(($date) => {
+                cy.get('@existingPayments').then(($before) => {
+                    // there should be one more payment on the scheduled date than there was before
+                    expect($before).to.eq($date.find('span:contains(- $3.33)').length - 1)
+                });
                 cy.contains('- $3.33').eq(0).click();
                 // save payment ID for future validation
                 cy.contains('Payment ID').parent().within(() => {
