@@ -1,0 +1,14 @@
+{
+    "baseUrl": "https://peach-borrower.peach-dev.finance",
+    "viewportWidth": 1800,
+    "viewportHeight": 1000,
+    "reporter": "cypress-mochawesome-reporter",
+    "reporterOptions": {
+        "reportDir": "cypress/reports",
+        "charts": true,
+        "reportPageTitle": "My Test Suite",
+        "embeddedScreenshots": true,
+        "inlineAssets": true
+    },
+    "video": false
+}
