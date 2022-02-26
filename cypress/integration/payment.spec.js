@@ -12,7 +12,7 @@ describe('Highest priority tests', () => {
         });
     });
 
-    // Note: I'm combining test cases 1 and 2 and automating them both as a single test
+    // NOTE: I'm combining test cases 1 and 2 and automating them both as a single test
     // because I make a habit of ensuring that all my automated tests clean up any data they create
 
     it('Schedule and Cancel Payment', () => {
@@ -26,8 +26,18 @@ describe('Highest priority tests', () => {
         let $nextMonth = $months[$today.getMonth() + 1];
         let $scheduledDate = $monthsAbbr[$today.getMonth() + 1] + ' 4';
 
+
         // wait for activity feed to appear
-        cy.wait('@activityLoading');
+        cy.get('[data-cy="loan-timeline-primary-row"]');
+
+        // cy.wait('@activityLoading');
+        cy.wait(3000);
+        // NOTE: Normally I don't like to use "wait" statements based on time like this. I prefer to wait for a specific request to finish
+        // (see commented code above), but I'm finding it difficult to figure out which specific request is loading the activity feed.
+        // It seems like the feed loads once, and then populates additional scheduled payments a few seconds later, which is causing my
+        // test to count the number of existing payments incorrectly. I've had some success waiting for the request above, but it's been
+        // a bit flakey, so I'm reluctantly waiting 3 seconds for the activity feed to finish populating and that seems to be working.
+
         // check to see how many payments of $3.33 are scheduled for the 4th of next month
         cy.get('section[class*="InfoCardContainer"]').within(($container) => {
             if ($container.find(`div:contains(${$scheduledDate})`).length > 0) {
@@ -68,7 +78,9 @@ describe('Highest priority tests', () => {
         cy.get('[data-cy="submit"]').click();
 
         // validate payment appears on homepage
-        cy.wait('@activityLoading');
+        // cy.wait('@activityLoading');
+        cy.get('[data-cy="loan-timeline-primary-row"]');
+        cy.wait(3000);
         cy.get('section[class*="InfoCardContainer"]').within(($container) => {
             cy.contains($scheduledDate).closest('[data-cy="loan-timeline-card"]').within(($date) => {
                 cy.get('@existingPayments').then(($before) => {
@@ -103,7 +115,7 @@ describe('Highest priority tests', () => {
                 cy.get('span:contains(- $3.33)').each(($element) => {
                     cy.wrap($element).click();
                 });
-            };
+            };            
         });
         // now that all payments are expanded, check none match payment ID
         cy.get('@paymentId').then(($paymentId) => {
