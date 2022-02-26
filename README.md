@@ -14,4 +14,4 @@ Click on test case
 
 To run headless & generate a report use `npx cypress run`
 
-Reports can be found under /cypress/reports
+Reports can be found under /cypress/reports/
